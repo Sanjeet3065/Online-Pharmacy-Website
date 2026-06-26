@@ -5,15 +5,11 @@
     font-family: Arial, sans-serif;
 }
 body{
-    /* background-image: url("background.jpeg"); */
-    /* background-color: #f1f6ff; */
     background-image: url("medico.jpeg");
      background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
 }
-
-/* Navbar */
 
 .navbar{
     height: 60px;
@@ -45,7 +41,6 @@ top: 0;
     font-weight: 500;
 }
 
-/* Main Container */
 
 .container{
     width: 68%;
@@ -54,7 +49,6 @@ top: 0;
     margin: 35px auto 0;
 }
 
-/* Overview */
 
 .info{
     display: flex;
@@ -74,7 +68,6 @@ top: 0;
     margin-right: 10px;
 }
 
-/* Cards */
 
 .cards{
     display: flex;
@@ -83,23 +76,23 @@ top: 0;
 
 .item1,
 .item2,
-.item3{
-    width: 260px;
-    height: 90px;
+.item3,
+.item4{
+    width: 200px;
+    height: 75px;
 
     display: flex;
     align-items: center;
-    justify-content: space-around;
+    justify-content: space-evenly;
 
     border: 2px solid;
     border-radius: 10px;
 }
 
 .cards i{
-    font-size: 37px;
+font-size: 28px;
 }
 
-/* Card 1 */
 
 .item1{
     border-color: #2d539a;
@@ -119,7 +112,6 @@ top: 0;
     color: #04399a;
 }
 
-/* Card 2 */
 
 .item2{
     border-color: lightgreen;
@@ -139,7 +131,6 @@ top: 0;
     color: rgb(7, 92, 7);
 }
 
-/* Card 3 */
 
 .item3{
     border-color: #bfa7ff;
@@ -159,7 +150,6 @@ top: 0;
     color: #6d28d9;
 }
 
-/* Search Section */
 
 .search{
     padding: 15px;
@@ -206,7 +196,6 @@ top: 0;
     margin-left: 15px;
 }
 
-/* Table + Form */
 
 .table-and-medicine{
     display: flex;
@@ -214,7 +203,6 @@ top: 0;
     gap: 20px;
 }
 
-/* Table */
 .tablepart{
     padding: 12px;
     border: 2px solid rgb(166, 213, 234);
@@ -254,20 +242,19 @@ height: 50px;
     text-align: center;
      border-top: 1px solid #ddd;
     border-bottom: 1px solid #ddd;
-    /* border-top: none;
-    border-bottom: none; */
+   
 }
 .medicine-list-table table tr td .action{
-    height: 30px;
+    height: 23px;
     width: 50px;
     border: none;
+    cursor: pointer;
     border-radius: 5px;
     color: white;
-    background-color: rgb(58, 184, 58);
+    background-color: rgb(50, 157, 50);
     
 }
 
-/* Form */
 .form{
     box-shadow: 3px 3px 3px rgb(177, 182, 182);;
  border: 2px solid rgb(166, 213, 234);
@@ -307,7 +294,7 @@ form button{
     height: 30px;
     width: 260px;
     border: none;
-background-color: rgb(58, 184, 58);
+background-color: rgb(65, 177, 65);
 border-radius:4px ;
 color: white;
 }
@@ -316,4 +303,424 @@ h5{
     text-align: center;
     margin-top: 40px;
     color: #9684c8;
+}
+
+
+.edit-btn{
+    height: 30px;
+    width: 55px;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    background-color: #f59e0b;
+    cursor: pointer;
+    margin-right: 5px;
+}
+
+
+.delete-btn{
+    height: 30px;
+    width: 60px;
+    border: none;
+    border-radius: 5px;
+    color: white;
+    background-color: #ef4444;
+    cursor: pointer;
+}
+
+.edit-btn:hover,
+.delete-btn:hover,
+.action:hover{
+    opacity: 0.9;
+}
+
+
+.medicine-list-table tbody tr:hover{
+    background-color: #f5f5f5;
+}
+
+
+@media(max-width:992px){
+
+    .cards{
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .table-and-medicine{
+        flex-direction: column;
+    }
+
+    .container{
+        width: 95%;
+    }
+
+    .medicine-list-table table{
+        width: 100%;
+    }
+}
+
+@media(max-width:768px){
+
+    .navbar{
+        flex-direction: column;
+        height: auto;
+        padding: 10px;
+    }
+
+    .navbar ul{
+        flex-wrap: wrap;
+        justify-content: center;
+        margin-top: 10px;
+    }
+
+    .input input{
+        width: 100%;
+    }
+
+    .input button{
+        width: 100%;
+        margin-left: 0;
+        margin-top: 10px;
+    }
+
+    .medicine-list-table{
+        overflow-x: auto;
+    }
+}
+
+.in-stock{
+    color: green;
+    font-weight: bold;
+}
+
+.low-stock{
+    color: orange;
+    font-weight: bold;
+}
+
+.out-stock{
+    color: red;
+    font-weight: bold;
+}
+
+.edit-btn{
+    background-color: orange;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 6px 10px;
+    cursor: pointer;
+    margin-right: 5px;
+}
+
+.delete-btn{
+    background-color: rgb(183, 32, 32);
+    color: white;
+    border: none;
+    border-radius: 5px;
+    padding: 6px 10px;
+    cursor: pointer;
+}
+
+.action{
+    margin-right: 5px;
+}
+
+.medicine-list-table{
+    max-height: 420px;
+    overflow-y: auto;
+}
+
+.status{
+    padding: 4px 8px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.instock{
+    background: #d4edda;
+    color: green;
+}
+
+.lowstock{
+    background: #fff3cd;
+    color: orange;
+}
+
+.outstock{
+    background: #f8d7da;
+    color: red;
+}
+
+.edit{
+    background: rgb(190, 136, 35);
+    color: white;
+    border: none;
+     height: 23px;
+    width: 50px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 4px;
+}
+
+.delete{
+    background: rgb(207, 54, 54);
+    color: rgb(255, 255, 255);
+    border: none;
+     height: 23px;
+    width: 50px;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-left: 4px;
+}
+
+.modal{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.5);
+    justify-content:center;
+    align-items:center;
+}
+
+.modal-content{
+    background:white;
+    padding:20px;
+    border-radius:10px;
+    width:350px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+.modal-content input{
+    height:35px;
+    padding-left:10px;
+}
+
+.modal-buttons{
+    display:flex;
+    justify-content:space-between;
+}
+
+
+#updateBtn{
+    background:green;
+    color:white;
+    border:none;
+    padding:10px;
+    cursor:pointer;
+}
+
+#closeBtn{
+    background:red;
+    color:white;
+    border:none;
+    padding:10px;
+    cursor:pointer;
+}
+
+
+.item4{
+    width: 200px;
+    height: 75px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+
+    border: 2px solid #f59e0b;
+    border-radius: 10px;
+
+    background: #fff8e6;
+
+    box-shadow: 3px 3px 3px rgb(177,182,182);
+}
+
+.item4 i{
+    font-size: 28px;
+    color: #f59e0b;
+}
+
+.item4 h2{
+    color: #f59e0b;
+}
+
+.item4 h4{
+    color: #b45309;
+}
+
+.cards h4{
+    font-size: 14px;
+}
+
+.cards h2{
+    font-size: 22px;
+}
+
+.cards{
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.theme-toggle{
+    margin-left: 20px;
+}
+
+#darkModeBtn{
+    width: 30px;
+    height: 30px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 20px;
+    background: white;
+    transition: 0.3s;
+}
+
+#darkModeBtn:hover{
+    transform: scale(1.1);
+}
+
+
+.navbar{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.navbar ul{
+    display:flex;
+    align-items:center;
+    gap:20px;
+}
+
+
+
+
+
+.dark-mode{
+    background: #121212;
+    color: white;
+}
+
+
+.dark-mode .navbar{
+    background: #000;
+}
+
+
+.dark-mode .item1,
+.dark-mode .item2,
+.dark-mode .item3,
+.dark-mode .item4{
+    background: #1f1f1f;
+    border-color: #444;
+}
+
+
+.dark-mode .search{
+    background: #1f1f1f;
+    border-color: #444;
+}
+
+.dark-mode .search h4,
+.dark-mode .search i{
+    color: white;
+}
+
+.dark-mode .input input{
+    background: #2c2c2c;
+    color: white;
+    border: 1px solid #555;
+}
+
+
+.dark-mode .tablepart{
+    background: #1f1f1f;
+    border-color: #444;
+}
+
+.dark-mode table{
+    color: white;
+}
+
+.dark-mode thead{
+    background: #333;
+}
+
+.dark-mode tbody tr:hover{
+    background: #2a2a2a;
+}
+
+.dark-mode td,
+.dark-mode th{
+    border-color: #444;
+}
+
+
+.dark-mode .form{
+    background: #1f1f1f;
+    border-color: #444;
+}
+
+.dark-mode form label,
+.dark-mode .addmedicinetitle h4{
+    color: white;
+}
+
+.dark-mode form input,
+.dark-mode form select{
+    background: #2c2c2c;
+    color: white;
+    border: 1px solid #555;
+}
+
+
+.dark-mode .modal-content{
+    background: #1f1f1f;
+    color: white;
+}
+
+.dark-mode .modal-content input{
+    background: #2c2c2c;
+    color: white;
+    border: 1px solid #555;
+}
+
+
+.dark-mode h5{
+    color: white;
+}
+
+
+.dark-mode .overview h2,
+.dark-mode .avaimed h4{
+    color: white;
+}
+
+.badge {
+    background: rgb(251, 251, 65);
+    color: rgb(0, 0, 0);
+    font-size: 12px;
+    font-weight: bold;
+
+    padding: 3px 7px;
+    border-radius: 50%;
+
+    margin-left: 6px;
+
+    position: relative;
+    top: -8px;
+
+    box-shadow: 0 0 8px rgba(255,0,0,0.6);
+}
+
+.badge:hover {
+    transform: scale(1.1);
+    transition: 0.2s;
 }
