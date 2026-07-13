@@ -1,44 +1,40 @@
 // =======================================================
-// MEDICINE DATA - 20 Medicines (as requested)
+// BACKEND SE DATA FETCH KARNE KA FUNCTION
 // =======================================================
-const medicines = [
-    { id: 1, name: "Paracetamol 500mg", category: "Pain Relief", price: 45, stock: 50 },
-    { id: 2, name: "Amoxicillin 250mg", category: "Antibiotics", price: 120, stock: 30 },
-    { id: 3, name: "Vitamin C 1000mg", category: "Vitamins", price: 85, stock: 60 },
-    { id: 4, name: "Aspirin 75mg", category: "Pain Relief", price: 60, stock: 40 },
-    { id: 5, name: "Azithromycin 500mg", category: "Antibiotics", price: 200, stock: 20 },
-    { id: 6, name: "Vitamin D3 2000IU", category: "Vitamins", price: 150, stock: 45 },
-    { id: 7, name: "Ibuprofen 400mg", category: "Pain Relief", price: 80, stock: 35 },
-    { id: 8, name: "Cetirizine 10mg", category: "Allergy", price: 55, stock: 55 },
-    { id: 9, name: "Metformin 500mg", category: "Diabetes", price: 95, stock: 25 },
-    { id: 10, name: "Atorvastatin 10mg", category: "Heart Care", price: 180, stock: 28 },
-    { id: 11, name: "Omeprazole 20mg", category: "Stomach Care", price: 70, stock: 40 },
-    { id: 12, name: "Amoxicillin 500mg", category: "Antibiotics", price: 160, stock: 22 },
-    { id: 13, name: "Vitamin B12 1000mcg", category: "Vitamins", price: 120, stock: 38 },
-    { id: 14, name: "Diclofenac 50mg", category: "Pain Relief", price: 65, stock: 33 },
-    { id: 15, name: "Clarithromycin 500mg", category: "Antibiotics", price: 250, stock: 15 },
-    { id: 16, name: "Calcium 500mg", category: "Vitamins", price: 90, stock: 50 },
-    { id: 17, name: "Losartan 50mg", category: "Heart Care", price: 140, stock: 30 },
-    { id: 18, name: "Pantoprazole 40mg", category: "Stomach Care", price: 75, stock: 42 },
-    { id: 19, name: "Montelukast 10mg", category: "Allergy", price: 110, stock: 25 },
-    { id: 20, name: "Glibenclamide 5mg", category: "Diabetes", price: 85, stock: 20 }
-];
+async function loadMedicines() {
+    try {
+        const response = await fetch('http://localhost:5000/api/medicines');
+        const data = await response.json();
+        
+        if (data.success) {
+            return data.data;
+        } else {
+            console.error("Error fetching medicines:", data.message);
+            return [];
+        }
+    } catch (error) {
+        console.error("Network error - Is backend running on port 5000?", error);
+        return [];
+    }
+}
 
 // =======================================================
 // DISPLAY PRODUCTS ON HOMEPAGE (index.html)
 // =======================================================
-function displayProducts(productList) {
+async function displayProducts() {
     const grid = document.getElementById('productGrid');
     if (!grid) return;
 
-    if (productList.length === 0) {
+    const medicines = await loadMedicines();
+
+    if (medicines.length === 0) {
         grid.innerHTML = `<p style="text-align:center;width:100%;padding:40px;font-size:18px;">
-            No medicines found. Try a different search!
+            No medicines found. Make sure backend is running!
         </p>`;
         return;
     }
 
-    grid.innerHTML = productList.map(med => {
+    grid.innerHTML = medicines.map(med => {
         const icon = getMedicineIcon(med.category);
         const stockStatus = med.stock > 0 ? 
             `<span class="stock in-stock">✅ In Stock</span>` : 
@@ -51,7 +47,7 @@ function displayProducts(productList) {
                 <p class="category">${med.category}</p>
                 <p class="price">₹${med.price}</p>
                 ${stockStatus}
-                <button onclick="addToCart(${med.id})" ${med.stock === 0 ? 'disabled' : ''}>
+                <button onclick="addToCart('${med._id}')" ${med.stock === 0 ? 'disabled' : ''}>
                     ${med.stock > 0 ? '🛒 Add to Cart' : 'Out of Stock'}
                 </button>
             </div>
@@ -60,7 +56,7 @@ function displayProducts(productList) {
 }
 
 // =======================================================
-// MEDICINE ICONS (for fun display)
+// MEDICINE ICONS
 // =======================================================
 function getMedicineIcon(category) {
     const icons = {
@@ -76,33 +72,135 @@ function getMedicineIcon(category) {
 }
 
 // =======================================================
-// SEARCH FUNCTION
+// ADD TO CART ✅ (YEH FUNCTION PEHLE MISSING THA)
 // =======================================================
-function searchMedicines() {
-    const input = document.getElementById('searchInput');
-    if (!input) return;
-
-    const query = input.value.toLowerCase().trim();
-    
-    if (query === '') {
-        displayProducts(medicines);
+function addToCart(medicineId) {
+    if (typeof cart === 'undefined') {
+        console.error("Cart not defined! Make sure cart.js is loaded.");
         return;
     }
 
-    const filtered = medicines.filter(med => 
-        med.name.toLowerCase().includes(query) ||
-        med.category.toLowerCase().includes(query)
-    );
+    loadMedicines().then(medicines => {
+        const medicine = medicines.find(m => m._id === medicineId);
+        if (!medicine) {
+            showToast('Medicine not found!', 'error');
+            return;
+        }
 
-    displayProducts(filtered);
+        if (medicine.stock <= 0) {
+            showToast('Sorry, out of stock!', 'error');
+            return;
+        }
+
+        const existingItem = cart.find(item => item.id === medicineId);
+        
+        if (existingItem) {
+            if (existingItem.quantity >= medicine.stock) {
+                showToast('Not enough stock!', 'error');
+                return;
+            }
+            existingItem.quantity += 1;
+        } else {
+            cart.push({
+                id: medicine._id,
+                name: medicine.name,
+                price: medicine.price,
+                quantity: 1,
+                maxStock: medicine.stock
+            });
+        }
+
+        localStorage.setItem('cart', JSON.stringify(cart));
+        updateCartCount();
+        showToast(`${medicine.name} added to cart!`, 'success');
+    }).catch(error => {
+        console.error("Error loading medicines:", error);
+        showToast('Error adding to cart', 'error');
+    });
+}
+
+// =======================================================
+// SEARCH FUNCTION (FIXED)
+// =======================================================
+async function searchMedicines() {
+    const input = document.getElementById('searchInput');
+    if (!input) {
+        console.error("❌ Search input not found!");
+        return;
+    }
+
+    const query = input.value.trim();
+    console.log("🔍 Searching for:", query);
+
+    try {
+        let url = 'http://localhost:5000/api/medicines';
+        if (query) {
+            // ✅ Case-insensitive search ke liye lowercase bhej rahe hain
+            url += `?search=${encodeURIComponent(query)}`;
+        }
+
+        console.log("📡 Fetching:", url);
+
+        const response = await fetch(url);
+        const data = await response.json();
+
+        console.log("📦 Response:", data);
+
+        if (data.success) {
+            displaySearchResults(data.data);
+        } else {
+            console.error("❌ Search error:", data.message);
+            displaySearchResults([]);
+        }
+    } catch (error) {
+        console.error("❌ Search error:", error);
+        displaySearchResults([]);
+    }
+}
+
+function displaySearchResults(medicines) {
+    const grid = document.getElementById('productGrid');
+    if (!grid) {
+        console.error("❌ Product grid not found!");
+        return;
+    }
+
+    if (!medicines || medicines.length === 0) {
+        grid.innerHTML = `<p style="text-align:center;width:100%;padding:40px;font-size:18px;">
+            🔍 No medicines found. Try a different search!
+        </p>`;
+        return;
+    }
+
+    grid.innerHTML = medicines.map(med => {
+        const icon = getMedicineIcon(med.category);
+        const stockStatus = med.stock > 0 ?
+            `<span class="stock in-stock">✅ In Stock</span>` :
+            `<span class="stock out-of-stock">❌ Out of Stock</span>`;
+
+        return `
+            <div class="product-card">
+                <span class="medicine-icon">${icon}</span>
+                <h3>${med.name}</h3>
+                <p class="category">${med.category}</p>
+                <p class="price">₹${med.price}</p>
+                ${stockStatus}
+                <button onclick="addToCart('${med._id}')" ${med.stock === 0 ? 'disabled' : ''}>
+                    ${med.stock > 0 ? '🛒 Add to Cart' : 'Out of Stock'}
+                </button>
+            </div>
+        `;
+    }).join('');
 }
 
 // =======================================================
 // DISPLAY TABLE ON all-medicines.html
 // =======================================================
-function displayMedicineTable() {
+async function displayMedicineTable() {
     const tbody = document.getElementById('medicineTableBody');
     if (!tbody) return;
+
+    const medicines = await loadMedicines();
 
     tbody.innerHTML = medicines.map((med, index) => `
         <tr>
@@ -112,7 +210,7 @@ function displayMedicineTable() {
             <td>₹${med.price}</td>
             <td>${med.stock > 0 ? '✅ ' + med.stock + ' left' : '❌ Out of Stock'}</td>
             <td>
-                <button onclick="addToCart(${med.id})" class="btn-small" ${med.stock === 0 ? 'disabled' : ''}>
+                <button onclick="addToCart('${med._id}')" class="btn-small" ${med.stock === 0 ? 'disabled' : ''}>
                     Add to Cart
                 </button>
             </td>
@@ -124,7 +222,7 @@ function displayMedicineTable() {
 }
 
 // =======================================================
-// THEME TOGGLE (Dark / Light Mode)
+// THEME TOGGLE
 // =======================================================
 function toggleTheme() {
     const currentTheme = document.documentElement.getAttribute('data-theme');
@@ -132,14 +230,12 @@ function toggleTheme() {
     document.documentElement.setAttribute('data-theme', newTheme);
     localStorage.setItem('theme', newTheme);
 
-    // Change button icon
     const btn = document.getElementById('themeToggle');
     if (btn) {
         btn.textContent = newTheme === 'dark' ? '☀️' : '🌙';
     }
 }
 
-// Load saved theme
 function loadTheme() {
     const savedTheme = localStorage.getItem('theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
@@ -153,28 +249,21 @@ function loadTheme() {
 // INITIALIZE ON PAGE LOAD
 // =======================================================
 document.addEventListener('DOMContentLoaded', function() {
-    // Load theme
     loadTheme();
 
-    // Theme toggle button
     const themeBtn = document.getElementById('themeToggle');
     if (themeBtn) {
         themeBtn.addEventListener('click', toggleTheme);
     }
 
-    // Display products on homepage
-    displayProducts(medicines);
-
-    // Display table on all-medicines page
+    displayProducts();
     displayMedicineTable();
-
-    // Update cart count
     updateCartCount();
 });
 
 // =======================================================
-// MAKE FUNCTIONS GLOBAL (for onclick in HTML)
+// MAKE FUNCTIONS GLOBAL
 // =======================================================
-window.searchMedicines = searchMedicines;
 window.addToCart = addToCart;
+window.searchMedicines = searchMedicines;
 window.updateCartCount = updateCartCount;

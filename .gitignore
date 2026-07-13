@@ -1,0 +1,21 @@
+# Node Modules (Backend)
+node_modules/
+
+# Environment variables (Backend)
+.env
+
+# OS Files
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# IDE / Editor
+.vscode/
+.idea/
+
+# Backup Files
+*.bak
+*.tmp

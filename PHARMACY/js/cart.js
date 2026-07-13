@@ -1,189 +1,255 @@
-// =======================================================
-// CART DATA (Stored in localStorage)
-// =======================================================
-let cart = JSON.parse(localStorage.getItem('cart')) || [];
+
+
+// CART DATA
+let cart = [];
+
+// BACKEND SE CART FETCH KARO
+async function loadCartFromBackend() {
+    try {
+        const response = await fetch('http://localhost:5000/api/cart');
+        const data = await response.json();
+
+        if (data.success) {
+            cart = (data.data || []).map(item => ({
+                id: item.medicineId || item._id || 'unknown',
+                name: item.name || 'Unknown Medicine',
+                category: item.category || 'General',
+                price: Number(item.price) || 0,
+                quantity: Number(item.quantity) || 1,
+                stock: Number(item.stock) || 0
+            }));
+            renderCartItems();
+            updateCartCount();
+        } else {
+            console.error("Error loading cart:", data.message);
+            cart = [];
+            renderCartItems();
+            updateCartCount();
+        }
+    } catch (error) {
+        console.error("Error loading cart from backend:", error);
+        cart = [];
+        renderCartItems();
+        updateCartCount();
+    }
+}
 
 // =======================================================
 // ADD TO CART
 // =======================================================
-function addToCart(medicineId) {
-    // Find the medicine
-    const medicine = medicines.find(m => m.id === medicineId);
-    if (!medicine) {
-        showToast('Medicine not found!', 'error');
-        return;
-    }
-
-    // Check stock
-    if (medicine.stock <= 0) {
-        showToast('Sorry, this medicine is out of stock!', 'error');
-        return;
-    }
-
-    // Check if already in cart
-    const existingItem = cart.find(item => item.id === medicineId);
-    
-    if (existingItem) {
-        // Check if quantity exceeds stock
-        if (existingItem.quantity >= medicine.stock) {
-            showToast('Not enough stock available!', 'error');
-            return;
-        }
-        existingItem.quantity += 1;
-    } else {
-        cart.push({
-            id: medicine.id,
-            name: medicine.name,
-            price: medicine.price,
-            quantity: 1,
-            maxStock: medicine.stock
+async function addToCart(medicineId) {
+    try {
+        const response = await fetch('http://localhost:5000/api/cart/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ medicineId, quantity: 1 })
         });
-    }
 
-    // Save to localStorage
-    localStorage.setItem('cart', JSON.stringify(cart));
-    
-    // Update cart count
-    updateCartCount();
-    
-    // Show success message
-    showToast(`${medicine.name} added to cart! `, 'success');
+        const data = await response.json();
+
+        if (data.success) {
+            await loadCartFromBackend();
+            showToast('✅ Item added to cart!', 'success');
+        } else {
+            showToast('❌ ' + data.message, 'error');
+        }
+    } catch (error) {
+        console.error("Error adding to cart:", error);
+        showToast('❌ Error adding to cart', 'error');
+    }
 }
 
 // =======================================================
 // REMOVE FROM CART
 // =======================================================
-function removeFromCart(medicineId) {
-    const item = cart.find(i => i.id === medicineId);
-    if (!item) return;
+async function removeFromCart(medicineId) {
+    try {
+        const response = await fetch(`http://localhost:5000/api/cart/remove/${medicineId}`, {
+            method: 'DELETE'
+        });
 
-    cart = cart.filter(i => i.id !== medicineId);
-    localStorage.setItem('cart', JSON.stringify(cart));
-    
-    updateCartCount();
-    renderCartItems();
-    showToast(`${item.name} removed from cart`, 'error');
+        const data = await response.json();
+
+        if (data.success) {
+            await loadCartFromBackend();
+            showToast('🗑️ Item removed from cart', 'error');
+        } else {
+            showToast('❌ ' + data.message, 'error');
+        }
+    } catch (error) {
+        console.error("Error removing from cart:", error);
+        showToast('❌ Error removing item', 'error');
+    }
 }
 
 // =======================================================
 // UPDATE QUANTITY
 // =======================================================
-function updateQuantity(medicineId, change) {
+async function updateQuantity(medicineId, change) {
     const item = cart.find(i => i.id === medicineId);
     if (!item) return;
 
     const newQty = item.quantity + change;
-    
+
     if (newQty <= 0) {
         removeFromCart(medicineId);
         return;
     }
 
-    // Check max stock
-    if (newQty > item.maxStock) {
-        showToast('Not enough stock available!', 'error');
-        return;
-    }
+    try {
+        const response = await fetch(`http://localhost:5000/api/cart/update/${medicineId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ quantity: newQty })
+        });
 
-    item.quantity = newQty;
-    localStorage.setItem('cart', JSON.stringify(cart));
-    
-    updateCartCount();
-    renderCartItems();
+        const data = await response.json();
+
+        if (data.success) {
+            await loadCartFromBackend();
+        } else {
+            showToast('❌ ' + data.message, 'error');
+        }
+    } catch (error) {
+        console.error("Error updating quantity:", error);
+        showToast('❌ Error updating quantity', 'error');
+    }
 }
 
 // =======================================================
-// RENDER CART ITEMS (on cart.html)
+// RENDER CART ITEMS (FIXED - NaN aur undefined nahi aayega)
 // =======================================================
 function renderCartItems() {
     const container = document.getElementById('cartContainer');
     if (!container) return;
 
-    if (cart.length === 0) {
+    if (!cart || cart.length === 0) {
         container.innerHTML = `
             <div class="empty-cart">
                 <h3>🛒 Your cart is empty</h3>
                 <p>Browse our <a href="index.html">medicines</a> and add some!</p>
             </div>
         `;
-        document.getElementById('totalPrice').textContent = '0';
+        const totalElement = document.getElementById('totalPrice');
+        if (totalElement) totalElement.textContent = '0';
         return;
     }
 
-    // Display cart items
-    container.innerHTML = cart.map(item => `
-        <div class="cart-item">
-            <div class="item-info">
-                <span class="item-name">${item.name}</span>
-                <span class="item-price">₹${item.price} × ${item.quantity}</span>
-                <span class="item-price">= ₹${item.price * item.quantity}</span>
-            </div>
-            <div class="item-quantity">
-                <button class="qty-btn" onclick="updateQuantity(${item.id}, -1)">−</button>
-                <span style="font-weight:600;min-width:30px;text-align:center;">${item.quantity}</span>
-                <button class="qty-btn" onclick="updateQuantity(${item.id}, 1)">+</button>
-                <button class="remove-btn" onclick="removeFromCart(${item.id})"> Remove</button>
-            </div>
-        </div>
-    `).join('');
+    container.innerHTML = cart.map(item => {
+        const id = item.id || '';
+        const name = item.name || 'Unknown Medicine';
+        const category = item.category || '';
+        const price = Number(item.price) || 0;
+        const quantity = Number(item.quantity) || 1;
+        const total = price * quantity;
 
-    // Update total
-    const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    document.getElementById('totalPrice').textContent = total;
+        return `
+            <div class="cart-item">
+                <div class="item-info">
+                    <span class="item-name">${name}</span>
+                    ${category ? `<span class="item-category">(${category})</span>` : ''}
+                    <span class="item-price">₹${price} × ${quantity}</span>
+                    <span class="item-total">= ₹${total}</span>
+                </div>
+                <div class="item-quantity">
+                    <button class="qty-btn" onclick="updateQuantity('${id}', -1)">−</button>
+                    <span style="font-weight:600;min-width:30px;text-align:center;">${quantity}</span>
+                    <button class="qty-btn" onclick="updateQuantity('${id}', 1)">+</button>
+                    <button class="remove-btn" onclick="removeFromCart('${id}')">🗑️ Remove</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    const total = cart.reduce((sum, item) => {
+        const price = Number(item.price) || 0;
+        const quantity = Number(item.quantity) || 0;
+        return sum + (price * quantity);
+    }, 0);
+
+    const totalElement = document.getElementById('totalPrice');
+    if (totalElement) totalElement.textContent = total;
 }
 
 // =======================================================
-// UPDATE CART COUNT (shown in navbar)
+// UPDATE CART COUNT
 // =======================================================
 function updateCartCount() {
-    const count = cart.reduce((sum, item) => sum + item.quantity, 0);
-    const cartCounts = document.querySelectorAll('#cartCount');
-    cartCounts.forEach(el => el.textContent = count);
+    const count = cart.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+    document.querySelectorAll('#cartCount').forEach(el => el.textContent = count);
 }
 
 // =======================================================
 // CLEAR CART
 // =======================================================
-function clearCart() {
-    if (cart.length === 0) {
+async function clearCart() {
+    if (!cart || cart.length === 0) {
         showToast('Cart is already empty!', 'error');
         return;
     }
-    
-    if (confirm('Are you sure you want to clear your cart?')) {
-        cart = [];
-        localStorage.setItem('cart', JSON.stringify(cart));
-        updateCartCount();
-        renderCartItems();
-        showToast('Cart cleared!', 'error');
+
+    if (!confirm('Are you sure you want to clear your cart?')) return;
+
+    try {
+        for (let item of cart) {
+            await fetch(`http://localhost:5000/api/cart/remove/${item.id}`, {
+                method: 'DELETE'
+            });
+        }
+        await loadCartFromBackend();
+        showToast('🗑️ Cart cleared!', 'error');
+    } catch (error) {
+        console.error("Error clearing cart:", error);
+        showToast('❌ Error clearing cart', 'error');
     }
 }
 
+
+// CONFIRM ORDER - FINAL
 // =======================================================
-// CONFIRM ORDER
-// =======================================================
-function confirmOrder() {
-    if (cart.length === 0) {
+async function confirmOrder() {
+    if (!cart || cart.length === 0) {
         showToast('Your cart is empty! Add some medicines first.', 'error');
         return;
     }
 
-    if (confirm('Confirm your order?')) {
-        const total = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
-        
-        // Create order summary
-        const orderSummary = cart.map(item => 
-            `${item.name} × ${item.quantity} = ₹${item.price * item.quantity}`
-        ).join('\n');
+    if (!confirm('Confirm your order?')) return;
 
-        alert(`ORDER CONFIRMED!\n\n${orderSummary}\n\nTotal: ₹${total}\n\nThank you for shopping at MediCare!`);
-        
-        // Clear cart after order
-        cart = [];
-        localStorage.setItem('cart', JSON.stringify(cart));
-        updateCartCount();
-        renderCartItems();
-        showToast('Order placed successfully! ', 'success');
+    try {
+        // ✅ Sirf items bhejo (medicineId + quantity)
+        const items = cart.map(item => ({
+            medicineId: String(item.id),
+            quantity: item.quantity
+        }));
+
+        console.log("📦 Sending items:", items);
+
+        const response = await fetch('http://localhost:5000/api/orders', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items: items })
+        });
+
+        const data = await response.json();
+        console.log("📦 Response:", data);
+
+        if (data.success) {
+            const orderSummary = cart.map(item =>
+                `${item.name} × ${item.quantity} = ₹${item.price * item.quantity}`
+            ).join('\n');
+
+            const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+            alert(`✅ ORDER CONFIRMED!\n\n${orderSummary}\n\nTotal: ₹${total}\n\nThank you for shopping at MediCare!`);
+
+            await loadCartFromBackend();
+            showToast('✅ Order placed successfully!', 'success');
+        } else {
+            showToast('❌ ' + data.message, 'error');
+        }
+    } catch (error) {
+        console.error("Error placing order:", error);
+        showToast('❌ Error placing order', 'error');
     }
 }
 
@@ -191,7 +257,6 @@ function confirmOrder() {
 // TOAST NOTIFICATION
 // =======================================================
 function showToast(message, type = 'success') {
-    // Remove existing toast
     const oldToast = document.querySelector('.toast');
     if (oldToast) oldToast.remove();
 
@@ -200,23 +265,16 @@ function showToast(message, type = 'success') {
     toast.textContent = message;
     document.body.appendChild(toast);
 
-    // Auto remove after 3 seconds
     setTimeout(() => {
-        toast.remove();
+        if (toast.parentNode) toast.remove();
     }, 3000);
 }
 
 // =======================================================
-// INITIALIZE CART PAGE
+// INITIALIZE
 // =======================================================
 document.addEventListener('DOMContentLoaded', function() {
-    // Load cart items if on cart page
-    if (document.getElementById('cartContainer')) {
-        renderCartItems();
-    }
-
-    // Update cart count on all pages
-    updateCartCount();
+    loadCartFromBackend();
 });
 
 // =======================================================
